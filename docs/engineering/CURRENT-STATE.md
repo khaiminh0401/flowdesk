@@ -1,39 +1,29 @@
 # Current state / resume here
 
-Snapshot: 2026-10-26. Repository handoff only; not automatically synchronized with GitHub. Fetch refs, read linked issues/PRs and inspect working tree/CI before continuing.
+Snapshot: 2026-10-26. Manual repository handoff, not synchronized automatically with GitHub. Fetch refs/read actual issues/PRs/CI before continuing.
 
-## Active milestone and base
+## Base and active task
 
-M0 — Engineering Foundation. Baseline main `9d723b7` merged PR [#7](https://github.com/khaiminh0401/flowdesk/pull/7), including `920cce6` loopback-startup documentation. Main [CI 40293194920](https://github.com/khaiminh0401/flowdesk/actions/runs/40293194920) succeeded. Existing M0 #1–#6 remain open; no automatic issue acceptance/closure was performed.
+Main `69ad007` merged [PR #18](https://github.com/khaiminh0401/flowdesk/pull/18). Main [CI40338793703](https://github.com/khaiminh0401/flowdesk/actions/runs/40338793703) succeeded. Foundation + live dashboard connectivity are implemented: 2 API unit +7 PostgreSQL IT,18 Angular tests,4 live Playwright scenarios. No authentication, credentials model, refresh/session/RBAC or workspace domain exists.
 
-## Verified baseline
+Active M1 **design**, [FD-009/#10](https://github.com/khaiminh0401/flowdesk/issues/10), branch `docs/FD-009-identity-session-design` directly from merged main. No user changes were present at start. #1–#6/#8/#9 remain operationally open; no issue was closed or progress inflated. Earlier PR18 draft/WIP snapshot is superseded by this actual merge discovery.
 
-Boot info/health, PostgreSQL/FlywayV1, strict standalone/lazy Angular shell, 2 backend unit + 7 real-PostgreSQL IT, 4 baseline Chrome tests, CI and startup documentation. No authentication, refresh/session code, workspace RBAC, business entities/transactions or Sprint 1 specification exists at this base.
+## Reviewable proposal
 
-## Current work
+- [ADR-0002](../adr/0002-identity-session-lifecycle.md): **Proposed**, no approval recorded. Compares server sessions, opaque tokens and JWT; recommends opaque access/rotating refresh to retain the explicit refresh/replay requirement without unneeded JWT keys.
+- [Threat model](../security/identity-threat-model.md), [proposed OpenAPI](../api/identity-session.proposed.json) and [acceptance scenarios](../security/identity-acceptance.md) specify expiry/replay/logout/CSRF, safe failures, transaction/race behavior, sensitive logging and future tenant invariants. Implemented `openapi.yaml` stays unchanged.
+- Local standard-library HTTP probe and six tool tests support real observations after implementation. They are not a simulated auth implementation or evidence that security controls work.
 
-Branch `feat/FD-008-project-brain-api-connectivity`, based directly on merged main. [FD-007 #8](https://github.com/khaiminh0401/flowdesk/issues/8): persistent knowledge entry point. [FD-008 #9](https://github.com/khaiminh0401/flowdesk/issues/9): read-only dashboard/API connection, typed contract, loading/error/retry/cancellation, same-origin dev proxy and live Playwright evidence. Draft [PR #18](https://github.com/khaiminh0401/flowdesk/pull/18) targets main. Implementation commit `daa05e9`, Project Brain commit `ec3b353`; the final documentation commit records this handoff. Never inherit main's CI status for this branch.
+## Current verification and limits
 
-## Findings, failures and decisions
+Proposed OpenAPI validates against the authoritative OAS3.0 schema and all local refs resolve. Seven Python tooling tests pass (six probe mechanics + publisher regression). Unchanged baseline API health passed on a temporary task-owned loopback18080 server, then the real proposed anonymous probe returned **FAIL: expected401, received404** because /me is absent. Fixture-dependent lifecycle probe returned **BLOCKED** without synthetic credentials. These are honest negative/prerequisite evidence, not passing product-security tests. Baseline server was stopped; caller's DB retained.
 
-- Dependabot alerts request returned403 (disabled/scope). Backend CVE status is not verified. No security settings/scopes were changed.
-- Hibernate has no entity mappings; direct PostgreSQL tests verify V1. No dummy entities/migrations added.
-- M1 security/session policy is undefined and requires human-reviewed ADR/threat model before implementation.
-- New HTTP service tests initially lacked the zoneless testing provider; that was a test-environment error, corrected to match the production bootstrap. New behavior tests run against real components/services and an isolated HTTP transport.
-- Local `.env` remains ignored, configured for this checkout's loopback DB port55432. Do not print or commit its credentials; do not reset an existing DB casually.
+Java21 `mvn -B -f apps/api/pom.xml clean verify` PASS: 2 unit +7 real-PostgreSQL IT, no failures/errors/skips. Actual PR regression CI remains pending until the draft is created. New code is limited to probe tooling; no application runtime, dependency, Flyway migration, authentication/session/cookie/authorization configuration or CI gate is changed. No deploy/public exposure or permission widening.
 
-## Next task and resume order
+Known limits: backend CVE status remains unverified (previous Dependabot403/disabled); entity-free Hibernate validation checks no mappings; Playwright CI failure artifacts remain deferred TD-10. Local `.env` is ignored, uses caller's existing loopback55432 DB, and must not be printed/committed/reset casually.
 
-The next safe task is [FD-009 #10](https://github.com/khaiminh0401/flowdesk/issues/10): write the concrete identity/session contract, threat model and proposed ADR for human review, using merged M0 as the base. This design task can proceed independently; do not assume PR #18 code is on main. Login/session implementation #11 depends on that review, workspace #12 depends on the merged identity slice. M2+ are planning epics, not completed features.
+## Next action and approval boundary
 
-Read [PROJECT-INTELLIGENCE](PROJECT-INTELLIGENCE.md), [PRODUCT-ROADMAP](PRODUCT-ROADMAP.md), [SECURITY-MODEL](SECURITY-MODEL.md) and [TEST-STRATEGY](TEST-STRATEGY.md). Preserve user changes and fetch actual remote state. Never merge, force-push, assume unmerged dependencies are on main, or change security policy without review.
+Human review of ADR-0002/model B, cookie/CSRF/lifetime/password/throttle defaults, strict duplicate-refresh reauthentication and first-slice provisioning scope is required. `AGENTS.md`: “Stop for human review before security-sensitive policy changes”. FD-010/#11 explicitly depends on that review. This session does not treat “continue” after merging the foundation PR as approval of a security policy that did not yet exist.
 
-## Session verification and delivery evidence
-
-2026-10-26 on implementation `daa05e9`: local Java21 `mvn -B -f apps/api/pom.xml clean verify` PASS (2 unit + 7 PostgreSQL IT, zero failures/errors/skips); publisher regression PASS; `npm ci`, lint, 18 Chrome tests, production build and `npm audit` PASS (zero reported npm vulnerabilities at execution). `npm run e2e` PASS (4 tests using real Boot/PostgreSQL/Angular plus explicitly injected failure cases); E2E TypeScript checked. Compose config/health, local documentation links, diff and credential-pattern review PASS. Real mobile screenshot inspected locally, ignored in Git.
-
-Actual [PR CI run 40296665719](https://github.com/khaiminh0401/flowdesk/actions/runs/40296665719) on `daa05e9`: api, web and e2e all PASS; logs confirm 9 backend, 18 unit browser and 4 live browser tests executed. This run verifies the implementation commit; verify current PR head checks before merging a later documentation commit.
-
-Independent read-only review of `9d723b7..daa05e9`: no Critical/Important findings. Minor plan-progress metadata corrected in final handoff; failure-artifact upload deferred as TD-10. Review did not independently judge live GitHub/scanner/historical test execution metadata; the primary run checked actual GitHub labels/milestones/issues/CI and local results. Dependency security scanning remains BLOCKED as described above; no broad security assurance is claimed.
-
-Created M1–M6 milestones and nonduplicate planning issues #8–#17 with labels and dependencies; all remain OPEN. Existing #1–#6 stayed OPEN. PR #18 remains draft; no merge, force-push, deployment or security-policy change. Playwright cleaned up its API/web process groups; the caller's local PostgreSQL/data was retained.
+After explicit approval, record its reference/date and accepted changes, then split FD-010 into reviewable implementation slices: credential/session backend + real PostgreSQL invariants, Angular login/recovery/logout + browser evidence. Do not assume an unmerged design PR is on main. Workspace FD-011/#12 follows merged identity, with tenant authorization/write concurrency tests. Never merge or force-push automatically.

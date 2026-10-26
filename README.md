@@ -94,6 +94,10 @@ docker compose up -d --wait db
 
 Only reset disposable local data. PostgreSQL initialization variables do not change existing volume credentials: changing passwords in `.env` alone does not reset a populated database.
 
+## Identity/session design for review
+
+[ADR-0002](docs/adr/0002-identity-session-lifecycle.md), the [proposed API](docs/api/identity-session.proposed.json), [threat model](docs/security/identity-threat-model.md) and [acceptance scenarios](docs/security/identity-acceptance.md) are proposals for FD-009/#10. Authentication is not implemented. These documents require explicit human policy review before FD-010 changes runtime security. The implemented API remains `docs/api/openapi.yaml`.
+
 ## Engineering decisions
 
 - Keep one modular monolith; use business feature packages as features arrive. No speculative microservices, queues or global state store.

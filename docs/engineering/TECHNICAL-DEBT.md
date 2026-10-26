@@ -4,7 +4,7 @@ Priorities describe engineering risk, not a claim of exploitation. Discovery bas
 
 | ID / priority | Evidence and effect | Resolution / dependency |
 |---|---|---|
-| TD-01 / P1 | No detailed identity/session spec, Security starter or security filters (`pom.xml`, `io.flowdesk` source). Business features cannot safely depend on guessed policies. | #10 design/ADR reviewed before #11 implementation. |
+| TD-01 / P1 | ADR-0002/proposed contract now describe identity/session policy, but human approval is pending. No Security starter/filter exists (`pom.xml`, `io.flowdesk` source). Business features must not depend on an unaccepted proposal. | #10 design/ADR reviewed before #11 implementation. |
 | TD-02 / P1 | Dependabot API403: alerts disabled and CLI scope unavailable. Maven tests are not a vulnerability scan. | Maintainer-approved scanner/settings review; no clean-backend-CVE claim. Do not broaden permissions autonomously. |
 | TD-03 / P2 | `ddl-auto=validate` active with zero entities; FoundationIT checks SQL directly. No ORM mapping validation yet. | Add/test actual mappings with first M1 domain entity; do not create dummy entities. |
 | TD-04 / P2 | Only V1 exists; FoundationIT proves clean install/checksum/constraints, not an upgrade across schema versions. | Add previous-version → next-version migration scenario when V2 is introduced. |

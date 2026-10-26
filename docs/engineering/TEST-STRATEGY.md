@@ -51,3 +51,7 @@ Failures retain Playwright traces locally in ignored test-results. CI currently 
 ## Before declaring done
 
 Run relevant full suites on the actual tree, inspect failures and diff, verify actual PR checks on head, and record PASS/FAIL/BLOCKED with versions/commit. Add security/concurrency/migration upgrade scenarios when the corresponding feature exists. No automatic benchmark numbers or screenshot fabrication. Human acceptance/merge remains separate.
+
+## Proposed identity acceptance (FD-009)
+
+See [identity acceptance](../security/identity-acceptance.md). Seven current Python tooling tests (six HTTP probe mechanics + existing publisher regression) are distinct from planned authentication/security tests. Proposed HTTP probes use loopback services/synthetic fixtures only and do not run as green product-security gates before the endpoints exist. Actual expiry/replay/logout/CSRF/tenant invariants remain unimplemented and require real Spring/PostgreSQL/Clock/browser tests after ADR review.
