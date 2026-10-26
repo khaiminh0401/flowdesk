@@ -25,7 +25,7 @@ Attackers include unauthenticated remote callers, malicious websites/subdomains,
 
 ## Residual risks and explicit trade-offs
 
-- A stolen still-unused refresh token plus valid browser-bound CSRF/origin ability can win a rotation; subsequent detected reuse revokes the family. HttpOnly is not a cure for malware/XSS or host compromise.
+- An attacker holding a raw still-unused refresh token can bootstrap their own CSRF session and spoof the configured Origin using a nonbrowser client, then win a rotation. A family is not bound to its original CSRF session; CSRF/Origin controls prevent browser cross-site attacks, not bearer-token theft. Subsequent detected reuse revokes the family. HttpOnly is not a cure for malware/XSS or host compromise.
 - Two legitimate refreshes can revoke a family; no replay grace window is hidden. Frontend single-flight reduces incidence but cannot make distinct browser clients atomically share memory tokens. Reauthentication is the proposed user-visible outcome.
 - Central DB lookup costs more than local JWT verification. No performance claim exists; measure representative queries before adding caching that could weaken revocation.
 - Temporary account-based throttles can cause denial of login to a known account; IP limits can affect shared networks. Values are reviewable policy defaults; deployment/proxy trust and monitoring are mandatory before public exposure.

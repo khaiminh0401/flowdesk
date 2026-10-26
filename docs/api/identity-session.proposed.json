@@ -194,7 +194,7 @@
       "post": {
         "operationId": "logout",
         "summary": "PROPOSED: idempotent family logout; valid CSRF/origin still required",
-        "description": "Refresh cookie or valid bearer identifies a family. If both supplied, require matching family or reject401. Otherwise missing/invalid credentials still204. Clear refresh+CSRF cookies using matching names/path, invalidate CSRF state. Never authenticate protected APIs using refresh or CSRF cookie.",
+        "description": "After CSRF/origin succeeds, usable credentials identify an active user/family: bearer must be unexpired; refresh must have a recognized hash and valid token/family deadlines (consumed-but-live is usable only to revoke). Ignore expired/malformed/unknown optional credentials. Two usable credentials identifying different families cause generic401, clear refresh cookie and revoke neither. One usable credential revokes its family and204; neither usable still204. Clear refresh+CSRF cookies and invalidate CSRF state on204. Optional invalid bearer must not be rejected earlier by auth filters. Refresh/CSRF cookies never authenticate protected resources.",
         "security": [
           {
             "csrfSession": []

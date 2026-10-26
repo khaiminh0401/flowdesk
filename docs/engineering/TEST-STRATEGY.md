@@ -54,4 +54,4 @@ Run relevant full suites on the actual tree, inspect failures and diff, verify a
 
 ## Proposed identity acceptance (FD-009)
 
-See [identity acceptance](../security/identity-acceptance.md). Seven current Python tooling tests (six HTTP probe mechanics + existing publisher regression) are distinct from planned authentication/security tests. Proposed HTTP probes use loopback services/synthetic fixtures only and do not run as green product-security gates before the endpoints exist. Actual expiry/replay/logout/CSRF/tenant invariants remain unimplemented and require real Spring/PostgreSQL/Clock/browser tests after ADR review.
+See [identity acceptance](../security/identity-acceptance.md). Eight current Python tooling tests (seven HTTP probe mechanics + existing publisher regression) are distinct from planned authentication/security tests. Proposed HTTP probes use loopback services/synthetic fixtures only and do not run as green product-security gates before the endpoints exist. Actual expiry/replay/logout/CSRF/tenant invariants remain unimplemented and require real Spring/PostgreSQL/Clock/browser tests after ADR review.
