@@ -38,7 +38,7 @@ docker compose ps
 set -a
 source .env
 set +a
-mvn -f apps/api/pom.xml spring-boot:run
+mvn -f apps/api/pom.xml spring-boot:run -Dspring-boot.run.arguments=--server.address=127.0.0.1
 ```
 
 In another terminal, from the repository root:
