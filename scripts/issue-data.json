@@ -1,0 +1,26 @@
+[
+  {
+    "title": "FD-001: Initialize monorepo & repository conventions",
+    "body": "**Priority:** P0  \n**Estimate:** 2h  \n**Milestone:** M0\n\n## Scope\nCreate new public FlowDesk repository with folder structure, README, .editorconfig, .gitignore, contributing guidelines and license.\n\n## Acceptance criteria\n- [ ] Repository is new and independent; README accurately labels project as Sprint 0; no credentials committed.\n\n## Notes\nDo not change existing repositories."
+  },
+  {
+    "title": "FD-002: Bootstrap Spring Boot application",
+    "body": "**Priority:** P0  \n**Estimate:** 3h  \n**Milestone:** M0\n\n## Scope\nCreate Java 21 Maven Spring Boot application with package-by-feature structure, health/info endpoints and baseline tests.\n\n## Acceptance criteria\n- [ ] `mvn verify` passes in configured environment; `GET /actuator/health` is available when DB is running.\n\n## Notes\nDo not change existing repositories."
+  },
+  {
+    "title": "FD-003: Bootstrap Angular application & routing",
+    "body": "**Priority:** P0  \n**Estimate:** 3h  \n**Milestone:** M0\n\n## Scope\nCreate standalone Angular application, shell, lazy dashboard routing, strict TS, lint and build.\n\n## Acceptance criteria\n- [ ] `npm ci`, lint and build succeed; dashboard route renders responsive shell.\n\n## Notes\nDo not change existing repositories."
+  },
+  {
+    "title": "FD-004: Set up PostgreSQL, Flyway & Docker Compose",
+    "body": "**Priority:** P0  \n**Estimate:** 3h  \n**Milestone:** M0\n\n## Scope\nCreate local PostgreSQL configuration, Flyway V1 migration and environment example.\n\n## Acceptance criteria\n- [ ] `docker compose up -d db` healthy; API applies Flyway V1; no secrets committed.\n\n## Notes\nDo not change existing repositories."
+  },
+  {
+    "title": "FD-005: Set up GitHub Actions CI",
+    "body": "**Priority:** P0  \n**Estimate:** 3h  \n**Milestone:** M0\n\n## Scope\nBuild workflow for Maven verify, Angular lint and build.\n\n## Acceptance criteria\n- [ ] CI triggers on PR/push to main and required checks are green before branch protection is enabled.\n\n## Notes\nDo not change existing repositories."
+  },
+  {
+    "title": "FD-006: Write architecture & API contract",
+    "body": "**Priority:** P0  \n**Estimate:** 5h  \n**Milestone:** M0\n\n## Scope\nWrite MVP requirements, system context, module diagram, ERD draft, OpenAPI starter and ADR for modular monolith.\n\n## Acceptance criteria\n- [ ] Documentation distinguishes current implementation from future scope; diagrams and API contract are committed.\n\n## Notes\nDo not change existing repositories."
+  }
+]

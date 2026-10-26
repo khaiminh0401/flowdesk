@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: FlowDesk API
+  version: 0.1.0
+  description: Sprint 0 endpoint; future product endpoints are specified separately before implementation.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/info:
+    get:
+      summary: Sprint 0 information endpoint
+      operationId: getInfo
+      responses:
+        '200':
+          description: Application information
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [application, stage]
+                properties:
+                  application: { type: string }
+                  stage: { type: string }

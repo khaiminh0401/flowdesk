@@ -1,0 +1,24 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: flowdesk-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/flowdesk}
+    username: ${SPRING_DATASOURCE_USERNAME:flowdesk}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
