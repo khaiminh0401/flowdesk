@@ -27,9 +27,9 @@ Preserve Java 21 / Boot 3.5.7, Angular 20 strict standalone/lazy routing, Postgr
 - [x] Web: repair runner and strict spec config, test actual shell navigation/lazy route/fallback and dashboard status; add accessibility semantics; install with committed lockfile; verify production bootstrap.
 - [x] Infrastructure/CI: environment export instructions, loopback services, health wait, unit/integration split, npm cache/ci/tests, least permissions/timeouts.
 - [x] Documentation/issues: accurate implementation boundary, API contract, technical decisions, checked acceptance matrix, repair issue publishing and issue bodies without closing unverified work.
-- [ ] Verification: Java 21 clean verify, npm ci/lint/test/build, Compose config/start/health, HTTP smoke, diff/secrets review, focused commits, push and draft PR; inspect actual CI.
+- [x] Verification: Java 21 clean verify, npm ci/lint/test/build, Compose config/start/health, HTTP smoke, diff/secrets review, focused commits, push and draft PR; inspect actual CI.
 
-Results and acceptance evidence will be recorded after execution. A failed or blocked check remains explicitly identified.
+Local execution and actual PR CI evidence are recorded below. Resolved initial failures are retained for traceability.
 
 ## Changes and decisions
 
@@ -56,7 +56,7 @@ Results and acceptance evidence will be recorded after execution. A failed or bl
 | API HTTP and SQL smoke | PASS | Running API: health UP, expected info JSON. Local Flyway history contains successful V1. |
 | Production frontend browser smoke | PASS | Built SPA served on loopback; headless Chrome rendered lazy dashboard and current navigation, outside TestBed. CDP checks at 390/1280px show no horizontal overflow; mobile navigation stays at its natural height. Screenshots inspected locally, not fabricated or committed. |
 | GitHub issue readback | PASS | #1–#6 exact repaired bodies and M0 membership. |
-| GitHub Actions on PR | BLOCKED (pending PR run) | Local checks do not establish CI status. Updated below when an actual run exists. |
+| GitHub Actions on PR | PASS | [Run 40284986400](https://github.com/khaiminh0401/flowdesk/actions/runs/40284986400) on implementation commit `b798637`: api and web both successful; CI logs confirm 2 unit + 7 IT and 4 Chrome tests actually ran. |
 
 ## Acceptance matrix
 
@@ -68,12 +68,12 @@ Statuses concern evidence on this branch, not a claim that unmerged main already
 | FD-002 / #2 | PASS | Java 21 clean verify, context + live HTTP on real PostgreSQL, isolated unit suite; validation limitation below. |
 | FD-003 / #3 | PASS | Locked install, strict lint, 4 Chrome tests, production build/browser smoke; desktop/mobile shell review. |
 | FD-004 / #4 | PASS | Healthy Compose DB, local and disposable-DB V1 execution, schema/constraints, documented environment and reset. |
-| FD-005 / #5 | BLOCKED (pending CI) | Workflow implemented and commands pass locally; actual api/web PR jobs must pass. |
+| FD-005 / #5 | PASS | Actual api/web PR jobs passed in run 40284986400; logs confirm tests executed. |
 | FD-006 / #6 | PASS | Requirements/diagrams/ADR distinguish plans; current API/health contract, audit and trade-offs documented. |
 
 ## Limits and work before M1
 
-- Do not call M0 complete until both PR jobs pass and the six issue criteria are reviewed. Draft PR is not merged automatically; branch protection is a maintainer decision.
+- All six acceptance rows have branch-level evidence, including successful actual api/web PR jobs. The six issues stay open for maintainer acceptance and the PR stays draft. Main is unchanged; review/merge and issue closure remain before adopting this foundation for M1. Branch protection is a maintainer decision.
 - No JPA entities exist. `ddl-auto=validate` is confirmed as active at startup, but direct SQL integration assertions—not ORM mappings—verify V1. Add entity/migration validation with actual M1 entities.
 - Local `.env` uses generated credentials and port 55432 only for this checkout. A clone must configure its own credentials. Existing initialized DB volumes keep their old passwords.
 - Chrome and Docker are required for full verification; dependency registries/image tags are external availability inputs. PostgreSQL 17 tags track patches intentionally; this is not byte-for-byte container reproducibility.
@@ -82,3 +82,11 @@ Statuses concern evidence on this branch, not a claim that unmerged main already
 ## Reference checks
 
 Angular compatibility was checked against https://angular.dev/reference/versions; the installed Angular 20 builder schemas determined runner options. Testcontainers Docker compatibility: https://github.com/testcontainers/testcontainers-java/releases/tag/1.21.4. Boot service connections: https://docs.spring.io/spring-boot/3.5/reference/testing/testcontainers.html.
+
+## Review and delivery
+
+Draft PR: https://github.com/khaiminh0401/flowdesk/pull/7 against main, branch `fix/FD-005-sprint0-audit-hardening`. Focused implementation commits: `df6e686` (backend), `8a63060` (web), `b336ff9` (CI/local tooling), `b798637` (documentation). A final documentation-only commit records CI evidence.
+
+Read-only independent review of `92a2e01..b798637` found no Critical or Important defects. Its one Minor finding (stale future-tense audit text) was corrected with this evidence update. Review scope excluded rerunning supplied smoke results, changing branch protection, and implementing future auth/entity behavior; the primary run verified actual CI, issue readback, browser/HTTP/Compose and npm audit directly.
+
+`npm start -- --port 4201` was also started successfully and its HTML fetched, validating the documented Angular development-server path in addition to the production browser smoke. No public deployment or merge occurred.
