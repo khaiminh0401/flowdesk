@@ -1,15 +1,11 @@
-# Publishing Sprint 0
+# Repository administration
 
-These commands require a GitHub token with permission to create public repositories and manage issues/milestones. Run them **only** from a new FlowDesk working directory; scripts refuse an existing `flowdesk` repository to protect previous work.
+The FlowDesk repository and M0 issues already exist. Do not rerun bootstrap publishing on this checkout. Normal contributions use a feature branch and draft PR as described in CONTRIBUTING.md; `main` is not modified directly.
+
+Historical bootstrap scripts require GitHub CLI authentication and permissions. `publish-new-repo.sh` refuses an existing remote repository. `create-sprint0-issues.sh` refuses when FD-001 already exists, and sends JSON issue bodies directly through stdin to preserve Markdown. Its regression test uses a fake CLI and performs no network writes:
 
 ```bash
-# From extracted flowdesk/ folder
-cd apps/web && npm install && cd ../..
-# Commit apps/web/package-lock.json as part of the initial commit
-bash scripts/publish-new-repo.sh
-bash scripts/create-sprint0-issues.sh
+python3 -m unittest discover -s scripts/tests
 ```
 
-**Note:** `gh repo create` and issues/milestones scripts require authentication (`gh auth login`) and proper scopes. Do not run scripts against an existing repository without reviewing them.
-
-Validate CI on GitHub after pushing; the initial starter was not fully executable-tested in the offline packaging environment. For reproducible installs, replace CI's `npm install` with `npm ci` once the lockfile is committed.
+Canonical issue drafts are in `scripts/issue-data.json` and the readable Sprint 0 issue document. Review each acceptance criterion against actual evidence; never close an issue just because a PR references it. CI must run on the actual PR commit before M0 can be considered verified.
