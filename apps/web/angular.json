@@ -47,7 +47,8 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "buildTarget": "flowdesk-web:build:development"
+            "buildTarget": "flowdesk-web:build:development",
+            "proxyConfig": "proxy.conf.json"
           }
         },
         "test": {

@@ -46,3 +46,48 @@ jobs:
         run: npm test -- --watch=false
       - name: Production build
         run: npm run build
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: apps/api/pom.xml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install locked browser test dependencies
+        run: npm ci --prefix apps/web
+      - name: Configure isolated test database
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import secrets
+          password = secrets.token_hex(24)
+          Path('.env').write_text('\n'.join([
+              'POSTGRES_DB=flowdesk', 'POSTGRES_USER=flowdesk',
+              'POSTGRES_PASSWORD=' + password,
+              'SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/flowdesk',
+              'SPRING_DATASOURCE_USERNAME=flowdesk',
+              'SPRING_DATASOURCE_PASSWORD=' + password,
+          ]) + '\n')
+          Path('.env').chmod(0o600)
+          PY
+          docker compose config --quiet
+          docker compose up -d --wait --wait-timeout 90 db
+      - name: Live browser, proxy, API and PostgreSQL tests
+        run: |
+          set -a
+          source .env
+          set +a
+          npm run e2e --prefix apps/web
+      - name: Remove this runner's test database
+        if: always()
+        run: |
+          if [ -f .env ]; then docker compose down --volumes; fi

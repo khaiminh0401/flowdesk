@@ -13,3 +13,5 @@
 **/out-tsc/
 **/__pycache__/
 .audit-browser/
+**/test-results/
+**/playwright-report/
