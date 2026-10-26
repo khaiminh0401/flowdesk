@@ -10,3 +10,6 @@
 **/.angular/
 **/coverage/
 *.log
+**/out-tsc/
+**/__pycache__/
+.audit-browser/
