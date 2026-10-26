@@ -53,7 +53,7 @@ class Client:
         self.base = local_base(base_url)
         self.cookies = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(self.cookies), NoRedirect())
+            urllib.request.ProxyHandler({}), urllib.request.HTTPCookieProcessor(self.cookies), NoRedirect())
         self.csrf = ''
 
     def request(self, method: str, path: str, *, body: dict | None = None,

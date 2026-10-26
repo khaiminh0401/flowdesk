@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
 import unittest
+from unittest.mock import patch
 
 MODULE = Path(__file__).resolve().parents[1] / 'security' / 'verify_identity_contract.py'
 spec = importlib.util.spec_from_file_location('identity_probe', MODULE)
@@ -60,6 +61,13 @@ class IdentityProbeTest(unittest.TestCase):
             with self.subTest(path=path), self.assertRaises(probe.Blocked):
                 self.client.request('GET', path)
         self.assertEqual(Handler.calls, [])
+
+    def test_ignores_configured_proxies_even_when_loopback_bypass_is_disabled(self):
+        with patch('urllib.request.getproxies', return_value={'http': self.base}), \
+                patch('urllib.request.proxy_bypass', return_value=False):
+            client = probe.Client(self.base)
+            client.request('GET', '/api/v1/allowed', access='A' * 43)
+        self.assertEqual(Handler.calls, ['/api/v1/allowed'])
 
     def test_follows_no_redirect_even_with_a_bearer(self):
         status, _, _ = self.client.request('GET', '/api/v1/redirect', access='A' * 43)
