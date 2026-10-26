@@ -5,16 +5,63 @@
   "projects": {
     "flowdesk-web": {
       "projectType": "application",
-      "schematics": {"@schematics/angular:component": {"style": "scss"}},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "fd",
       "architect": {
-        "build": {"builder": "@angular/build:application", "options": {"browser":"src/main.ts","tsConfig":"tsconfig.app.json","outputPath":"dist/flowdesk-web","index":"src/index.html","styles":["src/styles.scss"]}, "configurations":{"production":{"optimization":true,"outputHashing":"all"}}},
-        "serve": {"builder":"@angular/build:dev-server","options":{"buildTarget":"flowdesk-web:build"}},
-        "test": {"builder":"@angular/build:unit-test","options":{"buildTarget":"flowdesk-web:build"}}
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "outputPath": "dist/flowdesk-web",
+            "index": "src/index.html",
+            "styles": [
+              "src/styles.scss"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "outputHashing": "all",
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "flowdesk-web:build:development"
+          }
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "browsers": "ChromeHeadless",
+            "watch": false
+          }
+        }
       }
     }
   },
-  "cli": {"analytics": false}
+  "cli": {
+    "analytics": false
+  }
 }

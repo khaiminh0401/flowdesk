@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: FlowDesk API
   version: 0.1.0
-  description: Sprint 0 endpoint; future product endpoints are specified separately before implementation.
+  description: Implemented Sprint 0 endpoints only. Authentication and business APIs are planned.
 servers:
   - url: http://localhost:8080
 paths:
@@ -17,7 +17,39 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
                 required: [application, stage]
                 properties:
-                  application: { type: string }
-                  stage: { type: string }
+                  application: { type: string, enum: [FlowDesk] }
+                  stage: { type: string, enum: [sprint-0] }
+              example: { application: FlowDesk, stage: sprint-0 }
+  /actuator/health:
+    get:
+      summary: Aggregate application and database health
+      operationId: getHealth
+      responses:
+        '200':
+          description: Application and PostgreSQL are healthy
+          content:
+            application/vnd.spring-boot.actuator.v3+json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: An enabled health contributor is DOWN or OUT_OF_SERVICE
+          content:
+            application/vnd.spring-boot.actuator.v3+json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN, OUT_OF_SERVICE, UNKNOWN]
+        groups:
+          type: array
+          items: { type: string }
+      description: Detailed health components are not exposed by the default configuration.
