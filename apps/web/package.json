@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "ng serve --host 0.0.0.0",
-    "build": "ng build",
+    "start": "ng serve --host 127.0.0.1",
+    "build": "ng build --configuration production",
     "lint": "eslint . --max-warnings=0",
     "test": "ng test --watch=false"
   },
@@ -24,10 +24,22 @@
     "@angular/build": "^20.3.0",
     "@angular/cli": "^20.3.0",
     "@angular/compiler-cli": "^20.3.0",
-    "typescript": "~5.9.3",
-    "eslint": "^9.37.0",
-    "typescript-eslint": "^8.46.0",
+    "@eslint/js": "^9.37.0",
+    "@types/jasmine": "^5.1.0",
+    "@types/node": "^22.15.0",
     "angular-eslint": "^20.3.0",
-    "@types/node": "^22.15.0"
+    "eslint": "^9.37.0",
+    "jasmine-core": "^5.9.0",
+    "karma": "^6.4.4",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-coverage": "^2.2.1",
+    "karma-jasmine": "^5.1.0",
+    "karma-jasmine-html-reporter": "^2.1.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.0"
+  },
+  "engines": {
+    "node": "^22.12.0",
+    "npm": ">=10"
   }
 }
