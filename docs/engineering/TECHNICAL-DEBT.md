@@ -12,6 +12,7 @@ Priorities describe engineering risk, not a claim of exploitation. Discovery bas
 | TD-06 / P2 | No committed E2E on baseline; CI had only isolated app suites. | #9 adds minimal live connectivity/browser failure-retry gate. Broad auth/business E2E stays M1–M4 work. |
 | TD-07 / P2 | `scripts/issue-data.json` describes original M0; issue status is maintained on GitHub. Historical audit says PR #7 draft at that time. | Label historical docs clearly; use CURRENT-STATE/live GitHub for current state rather than auto-sync claims. |
 | TD-08 / P2 | No performance, deploy/restore, tracing or production-routing evidence in repo. | M4 measurement and M5 approved operations; no premature platform additions. |
+| TD-10 / P2 | Playwright retains failure traces/screenshots only on the runner/local disk; CI does not upload them. No failure artifacts survive the ephemeral runner. | Optional failure-only upload of scoped synthetic test artifacts with short retention; deferred minor from review, no test correctness blocker. |
 | TD-09 / P2 | package.json retains unused animations/zone dependencies and upstream Karma deprecation notices. | Review removal when touching dependency baseline; do not mix broad churn into connectivity slice. Audit current dependency graph each session. |
 
 Closed/resolved debt should retain a dated evidence link. Do not turn all missing future features into urgent bugs; roadmap dependencies distinguish intentional deferral from regression.

@@ -12,27 +12,27 @@ A standard Playwright test verifies live connectivity and controlled failure/rec
 
 ## Task 1 — Project brain and operational backlog
 
-- [ ] Write AGENTS.md and nine engineering documents, citing source/tests/commits/issues.
-- [ ] Reconcile M0–M6 without presenting planning targets as implemented.
-- [ ] Create only missing milestones/labels and nonduplicate issues; keep current issue states unchanged.
-- [ ] Record missing identity design and unavailable Dependabot alerts as explicit gaps.
+- [x] Write AGENTS.md and nine engineering documents, citing source/tests/commits/issues.
+- [x] Reconcile M0–M6 without presenting planning targets as implemented.
+- [x] Create only missing milestones/labels and nonduplicate issues; keep current issue states unchanged.
+- [x] Record missing identity design and unavailable Dependabot alerts as explicit gaps.
 
 ## Task 2 — Typed API connectivity vertical slice
 
 Files: `InfoController.java`, `InfoResponse.java`; `system-status.service.ts`, `system-status.component.ts`, corresponding specs; dashboard composition/spec, shell specs, bootstrap HTTP provider, dev proxy/angular config.
 
-- [ ] Write service/component tests for loading, healthy success, HTTP/network/unhealthy/malformed failures, timeout, retry and cancellation. Run and observe missing implementation failure.
-- [ ] Implement the minimal typed service, explicit state component and proxy, preserving existing dashboard copy and lazy routing.
-- [ ] Run affected and complete Angular tests; verify backend JSON remains unchanged after replacing Map with record.
+- [x] Write service/component tests for loading, healthy success, HTTP/network/unhealthy/malformed failures, timeout, retry and cancellation. Run and observe missing implementation failure.
+- [x] Implement the minimal typed service, explicit state component and proxy, preserving existing dashboard copy and lazy routing.
+- [x] Run affected and complete Angular tests; verify backend JSON remains unchanged after replacing Map with record.
 
 ## Task 3 — Full-stack evidence and delivery
 
 Files: Playwright config/spec, package/lockfile, CI E2E job, README, engineering verification/current state.
 
-- [ ] Add Playwright scenarios for live API success, proxy failure + actual retry recovery, malformed payload and mobile layout. Run with real Boot/PostgreSQL/Angular.
-- [ ] Run Java 21 clean verify, npm ci/lint/test/build, publisher regression and Compose validation. Preserve failure evidence and diagnose root causes.
-- [ ] Review diff/credential patterns, independent read-only review, focused commits and draft PR; inspect actual CI on its head.
-- [ ] Update CURRENT-STATE with actual results, outstanding policy review and next task. Never merge or force-push.
+- [x] Add Playwright scenarios for live API success, proxy failure + actual retry recovery, malformed payload and mobile layout. Run with real Boot/PostgreSQL/Angular.
+- [x] Run Java 21 clean verify, npm ci/lint/test/build, publisher regression and Compose validation. Preserve failure evidence and diagnose root causes.
+- [x] Review diff/credential patterns, independent read-only review, focused commits and draft PR; inspect actual CI on its head.
+- [x] Update CURRENT-STATE with actual results, outstanding policy review and next task. Never merge or force-push.
 
 ## Review focus
 
@@ -41,3 +41,5 @@ Files: Playwright config/spec, package/lockfile, CI E2E job, README, engineering
 - Component destroyed while requests are in flight: cancel requests and avoid stale state updates.
 - Existing route tests: flush real HTTP testing boundaries rather than mocking the status component.
 - Same-origin production hosting: proxy is development-only; deployment must route API/health explicitly before publishing.
+
+Execution evidence: local and actual api/web/e2e CI passed on implementation `daa05e9`, run40296665719. Independent review found no Critical/Important defects. Draft PR #18, current handoff and deferred diagnostic-artifact minor are recorded in CURRENT-STATE. Human review/merge remains outside implementation completion.

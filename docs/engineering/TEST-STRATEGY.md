@@ -46,7 +46,7 @@ npm run e2e
 
 Playwright uses installed Chrome and starts API8080 + Angular4200 on loopback. Ports must be free; it does not reuse unknown existing servers. It stops its process groups afterward and leaves the caller's DB/data intact. CI generates temporary random local credentials, starts its own DB and always tears that CI database down. No public deployment is needed.
 
-Failures retain Playwright traces locally in ignored test-results. Do not upload traces containing secrets/private data; test fixtures are synthetic. On headless Linux install a supported Chrome if absent (GitHub Ubuntu runner includes it). Unit and E2E TypeScript must be checked, not merely transpiled.
+Failures retain Playwright traces locally in ignored test-results. CI currently uploads no failure artifacts, so runner-local traces disappear when the runner is removed (TD-10). Do not upload traces containing secrets/private data; test fixtures are synthetic. On headless Linux install a supported Chrome if absent (GitHub Ubuntu runner includes it). Unit and E2E TypeScript must be checked, not merely transpiled.
 
 ## Before declaring done
 
