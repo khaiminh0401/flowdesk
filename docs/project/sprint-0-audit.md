@@ -1,5 +1,7 @@
 # Sprint 0 audit — 2026-10-26
 
+Historical execution report for PR #7. That PR was subsequently merged into main `9d723b7`; consult [CURRENT-STATE](../engineering/CURRENT-STATE.md) and live GitHub for present status.
+
 Baseline: `92a2e01` on remote main. Supplied folder had no Git metadata and lacked the remote lockfile; Git metadata was reconstructed without replacing working files, on `fix/FD-005-sprint0-audit-hardening`. No other supplied source differed from main. Six open issues belong to M0 — Engineering Foundation, due 2026-11-01.
 
 ## Findings before implementation
