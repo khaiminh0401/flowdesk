@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
@@ -7,8 +9,16 @@ import { routes } from './app.routes';
 describe('Application shell', () => {
   beforeEach(() => TestBed.configureTestingModule({
     imports: [AppComponent],
-    providers: [provideZonelessChangeDetection(), provideRouter(routes)]
+    providers: [provideZonelessChangeDetection(), provideRouter(routes), provideHttpClient(), provideHttpClientTesting()]
   }));
+
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  function flushStatus() {
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/v1/info').flush({ application: 'FlowDesk', stage: 'sprint-0' });
+    http.expectOne('/actuator/health').flush({ status: 'UP' });
+  }
 
   it('provides a named navigation landmark and a skip link to main content', async () => {
     const fixture = TestBed.createComponent(AppComponent);
@@ -23,6 +33,8 @@ describe('Application shell', () => {
   it('renders the lazy dashboard and marks its navigation link as current', async () => {
     const fixture = TestBed.createComponent(AppComponent);
     await TestBed.inject(Router).navigateByUrl('/');
+    fixture.detectChanges();
+    flushStatus();
     await fixture.whenStable();
     const element: HTMLElement = fixture.nativeElement;
     expect(element.querySelector('main h2')?.textContent).toContain('Build reliable workflows.');
@@ -33,6 +45,8 @@ describe('Application shell', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/not-a-page');
+    fixture.detectChanges();
+    flushStatus();
     await fixture.whenStable();
     expect(router.url).toBe('/');
     expect(fixture.nativeElement.querySelector('fd-dashboard')).not.toBeNull();
