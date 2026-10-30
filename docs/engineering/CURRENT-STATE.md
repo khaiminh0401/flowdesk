@@ -39,7 +39,7 @@ Environment: JDK21.0.9 selected explicitly (shell default JDK25 is unsuitable), 
 
 Playwright emitted the existing Node NO_COLOR/FORCE_COLOR warning; tests still passed. No CI gate/dependency/runtime policy/migration was changed. Local verification logs and browser artifacts are ignored, not committed. This session started the existing configured loopback DB only for live checks, then restored its stopped state without deleting data. No public deployment or permission widening.
 
-PR head `4fbb61f` had successful historical [CI40343488615](https://github.com/khaiminh0401/flowdesk/actions/runs/40343488615). Fresh changes require their own actual head checks after push; historical results do not verify this increment.
+Delivered code/documentation commit `6948be0` to existing draft PR19. Fresh [CI41015107926](https://github.com/khaiminh0401/flowdesk/actions/runs/41015107926) on that exact commit passed api/web/e2e; logs confirm 9 backend,15 tooling,18 Angular and4 live browser tests. This final handoff-only update records that verified commit; check the actual final PR head before accepting. GitHub annotations report Node20 action-runtime deprecation (runner forces Node24), setup-java v4 deprecation and ubuntu-latest image migration; tracked as TD-11, no workflow changes bundled.
 
 ## Next task and human review boundary
 
