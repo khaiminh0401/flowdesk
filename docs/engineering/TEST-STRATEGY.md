@@ -51,3 +51,9 @@ Failures retain Playwright traces locally in ignored test-results. CI currently 
 ## Before declaring done
 
 Run relevant full suites on the actual tree, inspect failures and diff, verify actual PR checks on head, and record PASS/FAIL/BLOCKED with versions/commit. Add security/concurrency/migration upgrade scenarios when the corresponding feature exists. No automatic benchmark numbers or screenshot fabrication. Human acceptance/merge remains separate.
+
+## Proposed identity acceptance (FD-009)
+
+See [identity acceptance](../security/identity-acceptance.md). Fifteen current Python tooling tests (fourteen HTTP probe mechanics + existing publisher regression) are distinct from planned authentication/security tests. Proposed HTTP probes use loopback services/synthetic fixtures only and do not run as green product-security gates before the endpoints exist. Actual expiry/replay/logout/CSRF/tenant invariants remain unimplemented and require real Spring/PostgreSQL/Clock/browser tests after ADR review.
+
+2026-10-30 probe regression evidence: controlled local HTTP fixtures reproduce hostname routing, cookie-scope bypass, malformed refresh responses, unexpected token-response fields and missing pre-replay authentication checks. These are tool tests, not a simulated product implementation. Application identity scenarios remain unimplemented.

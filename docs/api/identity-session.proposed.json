@@ -1,0 +1,606 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "FlowDesk identity/session \u2014 PROPOSED, NOT IMPLEMENTED",
+    "version": "0.1.0-proposed",
+    "description": "FD-009/#10, ADR-0002. Requires explicit human review before runtime security changes. Current implemented contract remains openapi.yaml. Same-origin browser only; local proxy example below, HTTPS required outside explicit loopback development. All auth responses, including errors, use Cache-Control:no-store."
+  },
+  "x-status": "proposed",
+  "servers": [
+    {
+      "url": "http://127.0.0.1:4200",
+      "description": "Explicit loopback development via frontend proxy; never production insecure-cookie fallback"
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/csrf": {
+      "get": {
+        "operationId": "bootstrapCsrf",
+        "summary": "PROPOSED: obtain framework synchronizer request token",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Cache-Control:no-store; create CSRF-only servlet session if absent. No authenticated security context.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfToken"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              },
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "CSRF-only session cookie __Host-FD-CSRF in HTTPS; FD-CSRF only loopback. HttpOnly/SameSite=Strict/Path=/; Secure in HTTPS; no Domain."
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Throttled"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login",
+        "summary": "PROPOSED: authenticate, create new family and rotate CSRF state",
+        "security": [
+          {
+            "csrfSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/InvalidInput"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/Throttled"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          },
+          "200": {
+            "description": "Tokens issued only after durable transaction commit; Cache-Control:no-store. Set refresh HttpOnly cookie; never return raw refresh in JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              },
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Refresh cookie: __Host-FD-REFRESH in HTTPS, FD-REFRESH only in explicit loopback profile. Secure (HTTPS), HttpOnly, SameSite=Strict, Path=/, no Domain. Login also rotates CSRF state; refresh does not."
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/LoginFailed"
+          },
+          "413": {
+            "$ref": "#/components/responses/InvalidInput"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "rotateRefresh",
+        "summary": "PROPOSED: atomically rotate one-use refresh token",
+        "description": "CSRF/origin validation precedes token effects. Lock/recheck family, consume+replace, enforce idle/absolute deadlines. Recognized consumed token durably revokes family before generic401; concurrent duplicate can invalidate winning response. No grace window. Empty body, no access header required.",
+        "security": [
+          {
+            "csrfSession": [],
+            "refreshCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tokens issued only after durable transaction commit; Cache-Control:no-store. Set refresh HttpOnly cookie; never return raw refresh in JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              },
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Refresh cookie: __Host-FD-REFRESH in HTTPS, FD-REFRESH only in explicit loopback profile. Secure (HTTPS), HttpOnly, SameSite=Strict, Path=/, no Domain. Login also rotates CSRF state; refresh does not."
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SessionInvalid"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/Throttled"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "summary": "PROPOSED: idempotent family logout; valid CSRF/origin still required",
+        "description": "After CSRF/origin succeeds, usable credentials identify an active user/family: bearer must be unexpired; refresh must have a recognized hash and valid token/family deadlines (consumed-but-live is usable only to revoke). Ignore expired/malformed/unknown optional credentials. Two usable credentials identifying different families cause generic401, clear refresh cookie and revoke neither. One usable credential revokes its family and204; neither usable still204. Clear refresh+CSRF cookies and invalidate CSRF state on204. Optional invalid bearer must not be rejected earlier by auth filters. Refresh/CSRF cookies never authenticate protected resources.",
+        "security": [
+          {
+            "csrfSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Family revoked when identifiable, cookies cleared; no body; Cache-Control:no-store",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/SessionInvalid"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfRejected"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "PROPOSED: current user from valid opaque bearer + live family/user state",
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Own user only, no password/hash/session/role/workspace claim; Cache-Control:no-store",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUser"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "accessToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Opaque, CSPRNG32-byte base64url; not JWT"
+      },
+      "refreshCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "FD-REFRESH",
+        "description": "Loopback name; HTTPS __Host-FD-REFRESH. Never protected-resource authentication."
+      },
+      "csrfSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "FD-CSRF",
+        "description": "CSRF-only session, no authenticated principal. HTTPS __Host-FD-CSRF."
+      }
+    },
+    "parameters": {
+      "Origin": {
+        "name": "Origin",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Exact explicitly configured frontend origin; missing/null/mismatch403, do not trust Host/forwarded headers."
+      },
+      "Csrf": {
+        "name": "X-CSRF-TOKEN",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Framework request token from latest csrf bootstrap. Fetch again after login/logout or expired state; no automatic business403 retry."
+      }
+    },
+    "responses": {
+      "InvalidInput": {
+        "description": "Input invalid; no credential/account details",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        }
+      },
+      "Unauthenticated": {
+        "description": "401 before protected operation effects; WWW-Authenticate Bearer",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        }
+      },
+      "LoginFailed": {
+        "description": "Unknown, disabled or wrong credentials; same AUTHENTICATION_FAILED",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        }
+      },
+      "SessionInvalid": {
+        "description": "Missing, malformed, expired, revoked or replayed refresh; same SESSION_INVALID; clear refresh cookie",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        }
+      },
+      "CsrfRejected": {
+        "description": "Missing/stale CSRF or unapproved/missing/null Origin; CSRF_INVALID; no side effects",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "Security store unavailable; safe503; no partial successful rotation",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        }
+      },
+      "Throttled": {
+        "description": "Temporary limit; applies to existing/unknown accounts alike",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "headers": {
+          "Retry-After": {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Seconds until retry"
+          },
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "ASCII email; trim/lowercase consistently, case-insensitive unique lookup"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "minLength": 15,
+            "maxLength": 128,
+            "writeOnly": true,
+            "description": "Unicode code points, preserve exactly; no truncation/normalization; never logged"
+          }
+        }
+      },
+      "CurrentUser": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "email",
+          "displayName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "accessToken",
+          "tokenType",
+          "expiresInSeconds",
+          "user"
+        ],
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "Keep in memory only"
+          },
+          "tokenType": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ]
+          },
+          "expiresInSeconds": {
+            "type": "integer",
+            "enum": [
+              600
+            ]
+          },
+          "user": {
+            "$ref": "#/components/schemas/CurrentUser"
+          }
+        }
+      },
+      "CsrfToken": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token",
+          "headerName"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "headerName": {
+            "type": "string",
+            "enum": [
+              "X-CSRF-TOKEN"
+            ]
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "requestId"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "INVALID_INPUT",
+              "AUTHENTICATION_REQUIRED",
+              "AUTHENTICATION_FAILED",
+              "SESSION_INVALID",
+              "CSRF_INVALID",
+              "RATE_LIMITED",
+              "SERVICE_UNAVAILABLE"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

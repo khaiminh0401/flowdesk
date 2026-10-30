@@ -1,39 +1,52 @@
 # Current state / resume here
 
-Snapshot: 2026-10-26. Repository handoff only; not automatically synchronized with GitHub. Fetch refs, read linked issues/PRs and inspect working tree/CI before continuing.
+Snapshot: 2026-10-30. Manual handoff; not automatically synchronized with GitHub. Fetch remote refs and inspect actual issues/PRs/checks before resuming.
 
-## Active milestone and base
+## Base and active work
 
-M0 — Engineering Foundation. Baseline main `9d723b7` merged PR [#7](https://github.com/khaiminh0401/flowdesk/pull/7), including `920cce6` loopback-startup documentation. Main [CI 40293194920](https://github.com/khaiminh0401/flowdesk/actions/runs/40293194920) succeeded. Existing M0 #1–#6 remain open; no automatic issue acceptance/closure was performed.
+- M0 foundation/connectivity is merged on main `69ad007` through [PR #18](https://github.com/khaiminh0401/flowdesk/pull/18); historical main [CI40338793703](https://github.com/khaiminh0401/flowdesk/actions/runs/40338793703) passed.
+- Active M1 **design** is [FD-009/#10](https://github.com/khaiminh0401/flowdesk/issues/10), branch `docs/FD-009-identity-session-design`, [draft PR #19](https://github.com/khaiminh0401/flowdesk/pull/19) targeting main. Clean working tree at session start, head `4fbb61f`; remote main is unchanged after fetch. PR19 remains unmerged; all 16 issues remain open across the seven milestones. No duplicate issue/PR was created or issue closed.
+- No application authentication, credential model, session/refresh logic, RBAC or workspace domain exists. ADR-0002 and its API/threat/acceptance documents remain **Proposed**. No human approval is recorded in GitHub comments/reviews or this session.
 
-## Verified baseline
+## Implemented this session
 
-Boot info/health, PostgreSQL/FlywayV1, strict standalone/lazy Angular shell, 2 backend unit + 7 real-PostgreSQL IT, 4 baseline Chrome tests, CI and startup documentation. No authentication, refresh/session code, workspace RBAC, business entities/transactions or Sprint 1 specification exists at this base.
+Fresh review discovery found [hostname routing comment](https://github.com/khaiminh0401/flowdesk/pull/19#discussion_r4378795019) on PR19 after the previous handoff. Corrected the existing probe/tooling increment rather than starting dependent runtime identity work:
 
-## Current work
+- Accept only literal `127.0.0.1` / `[::1]` bases; reject `localhost` and DNS names before any credential request. Normalize URL scheme so HTTPS selects the intended cookie profile. Existing no-proxy/no-redirect controls remain.
+- Preserve cookie-jar domain/path/Secure/expiry filters before overriding the selected synthetic refresh token; keep stored refresh state unchanged by the override itself.
+- Share exact top-level TokenResponse/access-token checks between login and refresh. Replay first proves replacement bearer access succeeds, then checks that the same bearer is denied after replay. This prevents empty/malformed or never-working tokens from becoming false revocation evidence.
+- Added seven regression tests, including controlled resolver/local HTTP sentinel and cookie/response/replay observations. Total Python tooling suite: 15 (14 probe mechanics + publisher regression). These are not product-authentication tests or a full schema/browser-security validator.
 
-Branch `feat/FD-008-project-brain-api-connectivity`, based directly on merged main. [FD-007 #8](https://github.com/khaiminh0401/flowdesk/issues/8): persistent knowledge entry point. [FD-008 #9](https://github.com/khaiminh0401/flowdesk/issues/9): read-only dashboard/API connection, typed contract, loading/error/retry/cancellation, same-origin dev proxy and live Playwright evidence. Draft [PR #18](https://github.com/khaiminh0401/flowdesk/pull/18) targets main. Implementation commit `daa05e9`, Project Brain commit `ec3b353`; the final documentation commit records this handoff. Never inherit main's CI status for this branch.
+Independent reviewer found no Critical/Important/Minor issue in the two-file code/test diff against `4fbb61f` and independently reran the 15 tests. Remaining proposal review concerns are recorded in PROJECT-INTELLIGENCE/TECHNICAL-DEBT: login/account-switch refresh-cookie read scope and explicit OpenAPI logout/error/header/input constraints need reconciliation during design review. Automated review does not approve policy.
 
-## Findings, failures and decisions
+## Fresh local verification
 
-- Dependabot alerts request returned403 (disabled/scope). Backend CVE status is not verified. No security settings/scopes were changed.
-- Hibernate has no entity mappings; direct PostgreSQL tests verify V1. No dummy entities/migrations added.
-- M1 security/session policy is undefined and requires human-reviewed ADR/threat model before implementation.
-- New HTTP service tests initially lacked the zoneless testing provider; that was a test-environment error, corrected to match the production bootstrap. New behavior tests run against real components/services and an isolated HTTP transport.
-- Local `.env` remains ignored, configured for this checkout's loopback DB port55432. Do not print or commit its credentials; do not reset an existing DB casually.
+Environment: JDK21.0.9 selected explicitly (shell default JDK25 is unsuitable), Maven3.9.12, Node22.18.0, npm10.9.3, Docker29.4.0, Chrome156.
 
-## Next task and resume order
+| Command / evidence | Result |
+|---|---|
+| `python3 -m unittest discover -s scripts/tests -v` | PASS, 15 tests; new behavior observed failing before fixes |
+| Java21 `mvn -B -ntp -f apps/api/pom.xml clean verify` | PASS, 2 unit +7 real PostgreSQL Testcontainers IT; zero failures/errors/skips |
+| `npm ci` in apps/web | PASS, locked dependencies installed |
+| `npm run lint` | PASS, zero warnings allowed |
+| `npm test -- --watch=false` | PASS, 18 Chrome tests |
+| `npm run build` | PASS, production bundle |
+| `npm audit` | PASS, zero reported vulnerabilities for frontend dependency tree only |
+| `docker compose config --quiet`; configured local DB health | PASS |
+| Java21 + local env `npm run e2e --prefix apps/web` | PASS, 4 live browser/proxy/API/PostgreSQL scenarios |
+| Diff whitespace / secret-pattern review | PASS before commit; synthetic fixtures only |
+| GitHub Dependabot alerts | BLOCKED, endpoint403: alerts disabled / insufficient scope; backend CVEs remain unverified |
 
-The next safe task is [FD-009 #10](https://github.com/khaiminh0401/flowdesk/issues/10): write the concrete identity/session contract, threat model and proposed ADR for human review, using merged M0 as the base. This design task can proceed independently; do not assume PR #18 code is on main. Login/session implementation #11 depends on that review, workspace #12 depends on the merged identity slice. M2+ are planning epics, not completed features.
+Playwright emitted the existing Node NO_COLOR/FORCE_COLOR warning; tests still passed. No CI gate/dependency/runtime policy/migration was changed. Local verification logs and browser artifacts are ignored, not committed. This session started the existing configured loopback DB only for live checks, then restored its stopped state without deleting data. No public deployment or permission widening.
 
-Read [PROJECT-INTELLIGENCE](PROJECT-INTELLIGENCE.md), [PRODUCT-ROADMAP](PRODUCT-ROADMAP.md), [SECURITY-MODEL](SECURITY-MODEL.md) and [TEST-STRATEGY](TEST-STRATEGY.md). Preserve user changes and fetch actual remote state. Never merge, force-push, assume unmerged dependencies are on main, or change security policy without review.
+Delivered code/documentation commit `6948be0` to existing draft PR19. Fresh [CI41015107926](https://github.com/khaiminh0401/flowdesk/actions/runs/41015107926) on that exact commit passed api/web/e2e; logs confirm 9 backend,15 tooling,18 Angular and4 live browser tests. This final handoff-only update records that verified commit; check the actual final PR head before accepting. GitHub annotations report Node20 action-runtime deprecation (runner forces Node24), setup-java v4 deprecation and ubuntu-latest image migration; tracked as TD-11, no workflow changes bundled.
 
-## Session verification and delivery evidence
+## Next task and human review boundary
 
-2026-10-26 on implementation `daa05e9`: local Java21 `mvn -B -f apps/api/pom.xml clean verify` PASS (2 unit + 7 PostgreSQL IT, zero failures/errors/skips); publisher regression PASS; `npm ci`, lint, 18 Chrome tests, production build and `npm audit` PASS (zero reported npm vulnerabilities at execution). `npm run e2e` PASS (4 tests using real Boot/PostgreSQL/Angular plus explicitly injected failure cases); E2E TypeScript checked. Compose config/health, local documentation links, diff and credential-pattern review PASS. Real mobile screenshot inspected locally, ignored in Git.
+Review [ADR-0002](../adr/0002-identity-session-lifecycle.md), threat model, proposed OpenAPI and outstanding design clarifications in PR19. `AGENTS.md`: “Stop for human review before security-sensitive policy changes”. Approve or revise model B, cookie/CSRF/lifetime/password/throttle defaults, strict duplicate-refresh reauthentication, and development-only provisioning. User decision in this session (2026-10-30): “Keep pending; review PR #19 first”. Policy remains unapproved; do not begin runtime identity implementation or infer approval from generic autonomous-execution instructions.
 
-Actual [PR CI run 40296665719](https://github.com/khaiminh0401/flowdesk/actions/runs/40296665719) on `daa05e9`: api, web and e2e all PASS; logs confirm 9 backend, 18 unit browser and 4 live browser tests executed. This run verifies the implementation commit; verify current PR head checks before merging a later documentation commit.
+After explicit approval, record its date/reference and reconcile the design concerns before planning FD-010/#11 as small end-to-end increments with real PostgreSQL/browser security acceptance. Never assume PR19 is merged on main. FD-011/#12 follows merged identity and a reviewed workspace permission matrix. Never merge or force-push automatically.
 
-Independent read-only review of `9d723b7..daa05e9`: no Critical/Important findings. Minor plan-progress metadata corrected in final handoff; failure-artifact upload deferred as TD-10. Review did not independently judge live GitHub/scanner/historical test execution metadata; the primary run checked actual GitHub labels/milestones/issues/CI and local results. Dependency security scanning remains BLOCKED as described above; no broad security assurance is claimed.
+## Historical evidence retained
 
-Created M1–M6 milestones and nonduplicate planning issues #8–#17 with labels and dependencies; all remain OPEN. Existing #1–#6 stayed OPEN. PR #18 remains draft; no merge, force-push, deployment or security-policy change. Playwright cleaned up its API/web process groups; the caller's local PostgreSQL/data was retained.
+2026-10-26: actual proposed anonymous probe on temporary loopback18080 returned FAIL (expected401, received404); lifecycle was BLOCKED without synthetic credentials. The app has not gained identity endpoints since. Earlier proposal/probe commits `5f15507`, `2bd1293`, `0fe31c6`, `cd0c454`, `4fbb61f` and their CI are historical evidence, not human acceptance or fresh security verification. TD-03 (no entity mappings), TD-10 (no CI failure-artifact upload), backend scanner coverage and all future business acceptance remain explicit limitations.

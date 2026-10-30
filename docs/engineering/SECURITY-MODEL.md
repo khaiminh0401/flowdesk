@@ -25,3 +25,9 @@ These are requirements to specify/test, not an accepted token policy or implemen
 ## Required evidence with implementation
 
 Real PostgreSQL integration tests must prove wrong/expired/revoked credentials and replay outcomes; authenticated users cannot read or mutate another workspace by substituting IDs; privilege changes and concurrency preserve invariants. Browser tests cover login/recovery/logout and safe failure states. Security-specific logging tests check that sensitive data is omitted. Match test cases to the accepted contract rather than relying on framework defaults.
+
+## FD-009 proposal status
+
+[ADR-0002](../adr/0002-identity-session-lifecycle.md), [threat model](../security/identity-threat-model.md), [proposed OpenAPI](../api/identity-session.proposed.json) and [acceptance/probe specification](../security/identity-acceptance.md) are now available for human review. Recommendation: opaque access/rotating refresh with durable family revocation, standard framework synchronizer CSRF and exact same-origin validation. Alternative server-side session requires explicitly adjusting refresh-token scope. JWT is not selected. All lifetimes, cookies, password and throttle defaults remain **Proposed**, not accepted or implemented. No approval is recorded.
+
+Probe-tool self-tests do not test a FlowDesk auth implementation. Current baseline probe gets404 instead of required401 because /me does not exist; fixture-dependent probes block without synthetic credentials. Neither is represented as a passing security feature.

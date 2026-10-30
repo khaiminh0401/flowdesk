@@ -11,3 +11,7 @@
 | 2026-10-26 | Proposed/pending review: M1 identity/session design | #10; do not choose JWT/session, token storage, CSRF, cookie or expiry policy merely from a stack keyword. Obtain review of threat model/API/ADR first. |
 
 Reconcile issue links against the live roadmap. Later implementation may supersede a decision, but preserve rationale/history rather than rewriting old evidence. No new major architecture ADR is warranted for consuming existing public diagnostics. A new identity/session policy does require one.
+
+## FD-009 proposal update — 2026-10-26
+
+PR #18 merged into main69ad007 with successful main CI40338793703. ADR-0002 now proposes opaque access + rotating refresh instead of JWT, compares standard server sessions, and specifies CSRF/cookies/lifetimes/replay/tenant transaction boundaries. Status remains **Proposed / no human approval recorded**. No runtime security settings, migrations, authentication endpoints or Angular session behavior are changed. The proposed API is separate from the implemented OpenAPI. Next: human policy review, then FD-010/#11 implementation from the accepted base.
