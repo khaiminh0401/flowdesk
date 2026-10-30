@@ -1,6 +1,6 @@
 # Project intelligence
 
-Updated discovery: 2026-10-26. `origin/main` = `69ad007`, merging [PR #18](https://github.com/khaiminh0401/flowdesk/pull/18) after foundation PR #7; main [CI 40338793703](https://github.com/khaiminh0401/flowdesk/actions/runs/40338793703) succeeded. Earlier discovery used `9d723b7`. This is a dated snapshot; fetch GitHub before relying on it.
+Updated discovery: 2026-10-30 (fresh remote fetch, issue/milestone/PR/review inspection). `origin/main` = `69ad007`, merging [PR #18](https://github.com/khaiminh0401/flowdesk/pull/18) after foundation PR #7; main [CI 40338793703](https://github.com/khaiminh0401/flowdesk/actions/runs/40338793703) succeeded. Earlier discovery used `9d723b7`. Draft PR #19 remains open at the start of this session (`4fbb61f`), with successful historical CI [40343488615](https://github.com/khaiminh0401/flowdesk/actions/runs/40343488615) and no human policy approval. Its later automated review identifies a hostname-routing defect in the probe; the current increment repairs that tool. All 16 issues remain open across the seven existing milestones; no duplicates or new milestones are needed. This is a dated snapshot; fetch GitHub before relying on it.
 
 ## 1. Overview
 
@@ -51,11 +51,11 @@ M0 foundation/connectivity are verified on main; [#1–#6](https://github.com/kh
 
 ## 9. Security concerns
 
-No Security starter/filter/password hash/session store exists in pom/source. No auth or workspace isolation claim is valid. Current public endpoints reveal only app/stage and aggregate health. Backend defaults do not bind loopback; README's explicit local run argument does. [SECURITY-MODEL](SECURITY-MODEL.md) records threats and review requirements. GitHub Dependabot alerts could not be read: API403 says disabled and CLI lacks admin:repo_hook scope. No repository setting/scopes were changed; backend CVE coverage remains unverified.
+No Security starter/filter/password hash/session store exists in pom/source. No auth or workspace isolation claim is valid. Current public endpoints reveal only app/stage and aggregate health. Backend defaults do not bind loopback; README's explicit local run argument does. [SECURITY-MODEL](SECURITY-MODEL.md) records threats and review requirements. GitHub Dependabot alerts could not be read: API403 says disabled and CLI lacks admin:repo_hook scope. Rechecked 2026-10-30: the Dependabot endpoint still returns403 (alerts disabled / insufficient scope); backend CVE coverage remains unverified. No repository setting/scopes were changed. Local `npm audit` reports zero vulnerabilities for the locked frontend tree; this does not cover backend dependencies. PR #19 probe fixes reject DNS names, preserve cookie scope during refresh override, normalize HTTPS scheme and prevent malformed replacement access from reaching replay assertions. Remaining design review concerns include login/account-switch refresh-cookie read scope and machine-readable logout/error/header/input constraints; ADR-0002 remains Proposed and those decisions require reconciliation during human review, not automatic runtime policy changes.
 
 ## 10. Coverage gaps
 
-Main69ad007 includes four committed live connectivity Playwright tests. Earlier baseline9d723b7 had only a local browser artifact. No authentication/workspace/product E2E exists; proposed security probes currently fail on absent endpoints or block on missing fixtures. No auth/authorization/concurrency tests because those domains do not exist. No code-coverage percentage, load result, backup/restore or public deployment evidence exists. Keep [TEST-STRATEGY](TEST-STRATEGY.md) proportional to implemented behavior.
+Main69ad007 includes four committed live connectivity Playwright tests. Earlier baseline9d723b7 had only a local browser artifact. No authentication/workspace/product E2E exists; proposed security probes still fail on absent endpoints or block on missing fixtures. Fourteen probe-tool tests plus the publisher regression now run against controlled local HTTP fixtures; they do not establish product identity security. No auth/authorization/concurrency tests because those domains do not exist. No code-coverage percentage, load result, backup/restore or public deployment evidence exists. Keep [TEST-STRATEGY](TEST-STRATEGY.md) proportional to implemented behavior.
 
 ## 11. Next priorities
 

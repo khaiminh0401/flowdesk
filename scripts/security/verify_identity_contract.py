@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import http.cookiejar
+from http.cookies import SimpleCookie
 import json
 import os
 import re
@@ -29,11 +30,11 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def local_base(value: str) -> str:
     parsed = urllib.parse.urlsplit(value)
     if (parsed.scheme not in ('http', 'https')
-            or parsed.hostname not in ('127.0.0.1', 'localhost', '::1')
+            or parsed.hostname not in ('127.0.0.1', '::1')
             or parsed.username or parsed.password or parsed.path not in ('', '/')
             or parsed.query or parsed.fragment):
-        raise Blocked('Use a loopback-only base URL without credentials, path or query')
-    return value.rstrip('/')
+        raise Blocked('Use a literal 127.0.0.1 or [::1] base URL without credentials, path or query')
+    return parsed.geturl().rstrip('/')
 
 
 def require_environment(*names: str) -> list[str]:
@@ -46,6 +47,15 @@ def require_environment(*names: str) -> list[str]:
 def expect_status(actual: int, expected: int) -> None:
     if actual != expected:
         raise ProbeFailure(f'Expected HTTP {expected}, received {actual}; response body withheld')
+
+
+def access_response(result: dict) -> str:
+    if (set(result) != {'tokenType', 'expiresInSeconds', 'accessToken', 'user'}
+            or result.get('tokenType') != 'Bearer' or result.get('expiresInSeconds') != 600
+            or not isinstance(result.get('accessToken'), str)
+            or not re.fullmatch(r'[A-Za-z0-9_-]{43}', result['accessToken'])):
+        raise ProbeFailure('Invalid access response contract; body withheld')
+    return result['accessToken']
 
 
 class Client:
@@ -69,17 +79,22 @@ class Client:
             if not re.fullmatch(r'[A-Za-z0-9_-]{43}', access):
                 raise Blocked('Access fixture must be an opaque32-byte base64url token')
             headers['Authorization'] = 'Bearer ' + access
-        if refresh is not None:
-            if not re.fullmatch(r'[A-Za-z0-9_-]{43}', refresh):
-                raise Blocked('Refresh fixture must be an opaque32-byte base64url token')
-            cookie_name = '__Host-FD-REFRESH' if self.base.startswith('https:') else 'FD-REFRESH'
-            cookies = {cookie.name: cookie.value for cookie in self.cookies}
-            cookies[cookie_name] = refresh
-            headers['Cookie'] = '; '.join(f'{name}={value}' for name, value in cookies.items())
         data = None if body is None else json.dumps(body).encode()
         if data is not None:
             headers['Content-Type'] = 'application/json'
         request = urllib.request.Request(self.base + path, data=data, headers=headers, method=method)
+        if refresh is not None:
+            if not re.fullmatch(r'[A-Za-z0-9_-]{43}', refresh):
+                raise Blocked('Refresh fixture must be an opaque32-byte base64url token')
+            # Preserve the jar's domain/path/Secure/expiry filtering. Override only
+            # the selected synthetic refresh credential, without changing the jar.
+            self.cookies.add_cookie_header(request)
+            cookies = SimpleCookie()
+            cookies.load(request.get_header('Cookie', ''))
+            cookie_name = '__Host-FD-REFRESH' if self.base.startswith('https:') else 'FD-REFRESH'
+            cookies[cookie_name] = refresh
+            request.add_unredirected_header('Cookie', '; '.join(
+                morsel.OutputString() for morsel in cookies.values()))
         try:
             response = self.opener.open(request, timeout=5)
         except urllib.error.HTTPError as error:
@@ -115,12 +130,9 @@ class Client:
         email, password = require_environment('AUTH_PROBE_EMAIL', 'AUTH_PROBE_PASSWORD')
         self.bootstrap()
         result = self.checked('POST', '/api/v1/auth/login', 200, body={'email': email, 'password': password})
-        if (result.get('tokenType') != 'Bearer' or result.get('expiresInSeconds') != 600
-                or not isinstance(result.get('accessToken'), str)
-                or not re.fullmatch(r'[A-Za-z0-9_-]{43}', result['accessToken'])):
-            raise ProbeFailure('Invalid access response contract; body withheld')
+        access = access_response(result)
         self.bootstrap()  # login rotated CSRF state
-        return result['accessToken']
+        return access
 
     def refresh_cookie(self) -> str:
         names = ('FD-REFRESH', '__Host-FD-REFRESH')
@@ -155,9 +167,10 @@ def replay(client: Client) -> None:
     client.login()
     old_refresh = client.refresh_cookie()
     replacement = client.checked('POST', '/api/v1/auth/refresh', 200)
-    access = replacement.get('accessToken')
-    if not isinstance(access, str) or client.refresh_cookie() == old_refresh:
+    access = access_response(replacement)
+    if client.refresh_cookie() == old_refresh:
         raise ProbeFailure('Refresh did not replace credentials; values withheld')
+    client.checked('GET', '/api/v1/me', 200, access=access)
     result = client.checked('POST', '/api/v1/auth/refresh', 401, refresh=old_refresh)
     if result.get('code') != 'SESSION_INVALID':
         raise ProbeFailure('Generic refresh failure code missing; body withheld')

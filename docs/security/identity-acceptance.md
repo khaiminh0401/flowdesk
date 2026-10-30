@@ -4,7 +4,7 @@ FD-009/#10 defines testable behavior for [ADR-0002](../adr/0002-identity-session
 
 ## Executable HTTP probes
 
-`scripts/security/verify_identity_contract.py` uses only Python standard library, accepts loopback URLs only, never follows redirects and withholds response bodies/credential values from output. It makes real HTTP requests; it does not simulate a secure server. It does not belong in the current product green gate, because the proposed endpoints do not exist yet. Probe-tool self-tests run in the existing Python CI suite; those tests prove tool behavior, not FlowDesk security.
+`scripts/security/verify_identity_contract.py` uses only Python standard library, accepts only literal `127.0.0.1` / `[::1]` base URLs (no `localhost` or DNS names), ignores system proxies, never follows redirects and withholds response bodies/credential values from output. It makes real HTTP requests; it does not simulate a secure server. It does not belong in the current product green gate, because the proposed endpoints do not exist yet. Probe-tool self-tests run in the existing Python CI suite; those tests prove tool behavior, not FlowDesk security.
 
 After the corresponding implementation and synthetic fixtures exist, start the API + proxy using README instructions:
 
@@ -21,13 +21,13 @@ python3 scripts/security/verify_identity_contract.py --case expiry
 python3 scripts/security/verify_identity_contract.py --case workspace
 ```
 
-Origin is the selected proxy base URL; use the configured frontend origin, not a different backend origin. Never run against real accounts: replay/logout probes deliberately revoke the synthetic account's family. Each case uses independent browser-cookie state. Exit0 = selected HTTP observations passed,1 = observed contract mismatch,2 = unavailable local service/required fixture. No response body, token, password or cookie value is printed or persisted.
+Origin is the selected proxy base URL; use the configured frontend origin, not a different backend origin. Never run against real accounts: replay/logout probes deliberately revoke the synthetic account's family. Each case uses independent cookie-jar state. Refresh overrides retain domain/path/Secure/expiry filtering for other cookies; this HTTP tool does not enforce browser-only HttpOnly/SameSite rules or certify cookie flags. Login and refresh check the exact top-level TokenResponse fields and opaque access-token shape; this is not a full OpenAPI response validator. Exit0 = selected HTTP observations passed,1 = observed contract mismatch,2 = unavailable local service/required fixture. No response body, token, password or cookie value is printed or persisted.
 
 | Probe | Observations / limits |
 |---|---|
 | anonymous | /me401; bootstrap CSRF200; missing CSRF and wrong Origin403; unknown account with CSRF returns generic401. Does not prove timing/rate/known-account equivalence. |
 | lifecycle | Valid login, bearer /me200; cookies alone /me401; logout204, old access401, repeated CSRF-protected logout204. |
-| replay | Login → refresh200 → replay consumed token401 → replacement access401. Confirms externally visible family revocation; integration test must additionally inspect committed DB state. |
+| replay | Login → refresh200 → replacement bearer /me200 → replay consumed token401 → same replacement bearer /me401. Confirms externally visible family revocation; integration test must additionally inspect committed DB state. |
 | expiry | Prepared expired access/refresh rejected401. Fixtures must belong to previously valid, otherwise active families. HTTP alone cannot prove exact-time comparisons or distinguish expiry from other denial. |
 | workspace | Actor can read their known resource200, same actor receives404 for another tenant's known existing resource. Partial read-isolation evidence only; not a replacement for write/role/concurrency tests. |
 

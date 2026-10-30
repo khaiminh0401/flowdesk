@@ -1,6 +1,6 @@
 # Product roadmap and dependency plan
 
-Planning snapshot: 2026-10-26, baseline main `69ad007` after merged PR #18. GitHub issues/PRs are operational truth; this document is not synchronized automatically. Complexity is relative engineering scope, not a fabricated delivery date. Prefer complete vertical slices and split epics before implementation. Do not start a dependent slice against assumed unmerged code.
+Planning snapshot rechecked: 2026-10-30, baseline main `69ad007` after merged PR #18. GitHub issues/PRs are operational truth; this document is not synchronized automatically. Complexity is relative engineering scope, not a fabricated delivery date. Prefer complete vertical slices and split epics before implementation. Do not start a dependent slice against assumed unmerged code.
 
 ## M0 — Engineering Foundation
 
@@ -11,7 +11,7 @@ Planning snapshot: 2026-10-26, baseline main `69ad007` after merged PR #18. GitH
 - **Acceptance:** fresh configured startup; strict lint/build/tests; real PostgreSQL migration/HTTP evidence; actual CI successful; documentation distinguishes future features; no committed secrets.
 - **Testing:** isolated controller tests, mandatory Testcontainers, Angular Chrome tests, publisher regression; new connectivity live Playwright gate.
 - **Risks:** unavailable Docker/registries, stale issue status, missing scanner coverage, dummy-test false confidence.
-- **DoD/status:** baseline code verified on main run [40293194920](https://github.com/khaiminh0401/flowdesk/actions/runs/40293194920); #1–#6 still open for acceptance. #8/#9 current increment requires its own actual CI and review.
+- **DoD/status:** baseline code verified on main run [40293194920](https://github.com/khaiminh0401/flowdesk/actions/runs/40293194920); #1–#6 still open for acceptance. #8/#9 code merged through PR #18; main CI40338793703 passed. Their issues remain open for operational acceptance.
 - **Issues:** [FD-001–006](https://github.com/khaiminh0401/flowdesk/milestone/1), [FD-007 Project Brain #8](https://github.com/khaiminh0401/flowdesk/issues/8), [FD-008 connectivity #9](https://github.com/khaiminh0401/flowdesk/issues/9).
 
 ## M1 — Identity & Workspace

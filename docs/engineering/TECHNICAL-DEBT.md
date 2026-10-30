@@ -15,4 +15,6 @@ Priorities describe engineering risk, not a claim of exploitation. Discovery bas
 | TD-10 / P2 | Playwright retains failure traces/screenshots only on the runner/local disk; CI does not upload them. No failure artifacts survive the ephemeral runner. | Optional failure-only upload of scoped synthetic test artifacts with short retention; deferred minor from review, no test correctness blocker. |
 | TD-09 / P2 | package.json retains unused animations/zone dependencies and upstream Karma deprecation notices. | Review removal when touching dependency baseline; do not mix broad churn into connectivity slice. Audit current dependency graph each session. |
 
+2026-10-30 review follow-up: PR #19 probe hostname routing and related cookie/response-validation defects are addressed with failing-first local HTTP regressions. Proposed-contract review concerns remain under TD-01/#10: login/account-switch cookie read scope and explicit OpenAPI logout/error/header/input constraints. These are not approved runtime behavior.
+
 Closed/resolved debt should retain a dated evidence link. Do not turn all missing future features into urgent bugs; roadmap dependencies distinguish intentional deferral from regression.

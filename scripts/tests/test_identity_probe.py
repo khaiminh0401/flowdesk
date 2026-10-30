@@ -1,6 +1,7 @@
 """Probe-tool tests only: never evidence that FlowDesk authentication exists."""
 import importlib.util
 import json
+import http.cookiejar
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
@@ -13,14 +14,32 @@ probe = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(probe)
 
 
+def token_response(access='A' * 43):
+    return {'tokenType': 'Bearer', 'expiresInSeconds': 600, 'accessToken': access,
+            'user': {'id': '00000000-0000-0000-0000-000000000001',
+                     'email': 'fixture@example.invalid', 'displayName': 'Fixture'}}
+
+
 class Handler(BaseHTTPRequestHandler):
     calls = []
+    requests = []
+    responses = {}
 
     def log_message(self, *_args):
         pass
 
     def do_GET(self):
         self.calls.append(self.path)
+        self.requests.append((self.path, dict(self.headers)))
+        if self.path in self.responses:
+            response = self.responses[self.path]
+            status, headers, body = response.pop(0) if isinstance(response, list) else response
+            self.send_response(status)
+            for name, value in headers:
+                self.send_header(name, value)
+            self.end_headers()
+            self.wfile.write(json.dumps(body).encode())
+            return
         if self.path == '/api/v1/redirect':
             self.send_response(302)
             self.send_header('Location', '/api/v1/target')
@@ -31,6 +50,10 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         content = b'private-token-not-json' if self.path == '/api/v1/malformed' else json.dumps({'code': 'AUTHENTICATION_REQUIRED'}).encode()
         self.wfile.write(content)
+
+    def do_POST(self):
+        self.rfile.read(int(self.headers.get('Content-Length', '0')))
+        self.do_GET()
 
 
 class IdentityProbeTest(unittest.TestCase):
@@ -49,7 +72,98 @@ class IdentityProbeTest(unittest.TestCase):
 
     def setUp(self):
         Handler.calls.clear()
+        Handler.requests.clear()
+        Handler.responses.clear()
         self.client = probe.Client(self.base)
+
+    def test_rejects_localhost_before_credentials_can_reach_a_resolved_destination(self):
+        # A controlled resolver points the hostname at our sentinel server only.
+        # Restoring hostname acceptance would deliver the bearer to this server.
+        import socket
+        addresses = socket.getaddrinfo('127.0.0.1', self.server.server_port, type=socket.SOCK_STREAM)
+        with patch('socket.getaddrinfo', return_value=addresses):
+            with self.assertRaises(probe.Blocked):
+                client = probe.Client(f'http://localhost:{self.server.server_port}')
+                client.request('GET', '/api/v1/allowed', access='A' * 43)
+        self.assertEqual(Handler.calls, [])
+
+    def test_accepts_only_explicit_ipv4_and_ipv6_loopback_literals(self):
+        self.assertEqual(probe.local_base('http://127.0.0.1:4200/'), 'http://127.0.0.1:4200')
+        self.assertEqual(probe.local_base('https://[::1]:4200/'), 'https://[::1]:4200')
+        for base in ['http://localhost', 'http://LOCALHOST', 'http://127.1',
+                     'http://2130706433', 'http://[::ffff:127.0.0.1]']:
+            with self.subTest(base=base), self.assertRaises(probe.Blocked):
+                probe.Client(base)
+
+    def test_normalizes_scheme_before_selecting_the_https_cookie_profile(self):
+        self.assertEqual(probe.local_base('HTTPS://[::1]:4200/'), 'https://[::1]:4200')
+
+    def test_refresh_override_preserves_cookie_domain_path_secure_and_expiry_filters(self):
+        for name, domain, path, secure, expires in [
+            ('FD-CSRF', '127.0.0.1', '/', False, None),
+            ('private', '127.0.0.1', '/private', False, None),
+            ('foreign', 'example.invalid', '/', False, None),
+            ('secure', '127.0.0.1', '/', True, None),
+            ('expired', '127.0.0.1', '/', False, 1),
+            ('FD-REFRESH', '127.0.0.1', '/', False, None),
+        ]:
+            self.client.cookies.set_cookie(http.cookiejar.Cookie(
+                0, name, 'synthetic', None, False, domain, False, False,
+                path, True, secure, expires, expires is None, None, None, {}))
+        self.client.request('POST', '/api/v1/auth/refresh', refresh='R' * 43)
+        sent = Handler.requests[-1][1]['Cookie']
+        self.assertEqual(set(sent.split('; ')), {'FD-CSRF=synthetic', 'FD-REFRESH=' + 'R' * 43})
+        self.assertEqual(next(cookie.value for cookie in self.client.cookies
+                              if cookie.name == 'FD-REFRESH'), 'synthetic')
+
+    def test_replay_rejects_malformed_replacement_access_before_observing_revocation(self):
+        for access in ['', 'short', None]:
+            with self.subTest(access=access):
+                Handler.calls.clear()
+                Handler.responses.update({
+                    '/api/v1/auth/csrf': (200, [], {'headerName': 'X-CSRF-TOKEN', 'token': 'synthetic-csrf'}),
+                    '/api/v1/auth/login': (200, [('Set-Cookie', 'FD-REFRESH=' + 'R' * 43 + '; Path=/')],
+                                           token_response()),
+                    '/api/v1/auth/refresh': (200, [('Set-Cookie', 'FD-REFRESH=' + 'S' * 43 + '; Path=/')],
+                                             token_response(access)),
+                })
+                with patch.dict('os.environ', {'AUTH_PROBE_EMAIL': 'fixture@example.invalid',
+                                               'AUTH_PROBE_PASSWORD': 'synthetic-password'}):
+                    with self.assertRaises(probe.ProbeFailure):
+                        probe.replay(probe.Client(self.base))
+                self.assertEqual(Handler.calls.count('/api/v1/auth/refresh'), 1)
+
+    def test_login_rejects_extra_response_fields_instead_of_certifying_a_token_leak(self):
+        Handler.responses.update({
+            '/api/v1/auth/csrf': (200, [], {'headerName': 'X-CSRF-TOKEN', 'token': 'synthetic-csrf'}),
+            '/api/v1/auth/login': (200, [], {**token_response(), 'refreshToken': 'private-sentinel'}),
+        })
+        with patch.dict('os.environ', {'AUTH_PROBE_EMAIL': 'fixture@example.invalid',
+                                       'AUTH_PROBE_PASSWORD': 'synthetic-password'}):
+            with self.assertRaises(probe.ProbeFailure) as caught:
+                self.client.login()
+        self.assertNotIn('private-sentinel', str(caught.exception))
+
+    def test_replay_proves_replacement_access_works_before_testing_revocation(self):
+        Handler.responses.update({
+            '/api/v1/auth/csrf': (200, [], {'headerName': 'X-CSRF-TOKEN', 'token': 'synthetic-csrf'}),
+            '/api/v1/auth/login': (200, [('Set-Cookie', 'FD-REFRESH=' + 'R' * 43 + '; Path=/')],
+                                   token_response()),
+            '/api/v1/auth/refresh': [
+                (200, [('Set-Cookie', 'FD-REFRESH=' + 'S' * 43 + '; Path=/')], token_response('B' * 43)),
+                (401, [], {'code': 'SESSION_INVALID'}),
+            ],
+            '/api/v1/me': [(200, [], token_response()['user']), (401, [], {'code': 'SESSION_INVALID'})],
+        })
+        with patch.dict('os.environ', {'AUTH_PROBE_EMAIL': 'fixture@example.invalid',
+                                       'AUTH_PROBE_PASSWORD': 'synthetic-password'}):
+            probe.replay(self.client)
+        requests = [(path, headers.get('Authorization')) for path, headers in Handler.requests
+                    if path in ('/api/v1/me', '/api/v1/auth/refresh')]
+        self.assertEqual(requests, [('/api/v1/auth/refresh', None),
+                                    ('/api/v1/me', 'Bearer ' + 'B' * 43),
+                                    ('/api/v1/auth/refresh', None),
+                                    ('/api/v1/me', 'Bearer ' + 'B' * 43)])
 
     def test_rejects_nonlocal_and_credential_bearing_base_urls(self):
         for base in ['https://example.com', 'http://user:password@localhost', 'http://localhost/api', 'http://localhost?secret=value']:
