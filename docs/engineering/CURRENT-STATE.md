@@ -43,7 +43,7 @@ Delivered code/documentation commit `6948be0` to existing draft PR19. Fresh [CI4
 
 ## Next task and human review boundary
 
-Review [ADR-0002](../adr/0002-identity-session-lifecycle.md), threat model, proposed OpenAPI and outstanding design clarifications in PR19. `AGENTS.md`: “Stop for human review before security-sensitive policy changes”. Approve or revise model B, cookie/CSRF/lifetime/password/throttle defaults, strict duplicate-refresh reauthentication, and development-only provisioning. An approval question is pending; no answer is inferred from elapsed time or generic autonomous-execution instructions.
+Review [ADR-0002](../adr/0002-identity-session-lifecycle.md), threat model, proposed OpenAPI and outstanding design clarifications in PR19. `AGENTS.md`: “Stop for human review before security-sensitive policy changes”. Approve or revise model B, cookie/CSRF/lifetime/password/throttle defaults, strict duplicate-refresh reauthentication, and development-only provisioning. User decision in this session (2026-10-30): “Keep pending; review PR #19 first”. Policy remains unapproved; do not begin runtime identity implementation or infer approval from generic autonomous-execution instructions.
 
 After explicit approval, record its date/reference and reconcile the design concerns before planning FD-010/#11 as small end-to-end increments with real PostgreSQL/browser security acceptance. Never assume PR19 is merged on main. FD-011/#12 follows merged identity and a reviewed workspace permission matrix. Never merge or force-push automatically.
 
